@@ -17,8 +17,9 @@ done
 
 watchlist=$(echo "$watchlist" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
-# Ignorar las carpetas .git de repos dentro de la config (macros propias, klipper-macros...):
-# cada copia toca sus archivos y provocaba otra copia, en bucle (20/11/26).
+# Ignore .git directories of repositories inside the watched paths (e.g. macro repos cloned
+# into printer_data/config): every backup touches files inside them, which retriggered
+# the watcher and caused an endless backup loop.
 exclude_pattern=".swp|.tmp|printer-[0-9]*_[0-9]*.cfg|.bak|.bkp|/\.git(/|$)"
 
 inotifywait -mrP -e close_write -e move -e delete --exclude "$exclude_pattern" $watchlist |
