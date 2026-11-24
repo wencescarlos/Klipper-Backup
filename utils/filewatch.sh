@@ -17,7 +17,9 @@ done
 
 watchlist=$(echo "$watchlist" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
-exclude_pattern=".swp|.tmp|printer-[0-9]*_[0-9]*.cfg|.bak|.bkp"
+# Ignorar las carpetas .git de repos dentro de la config (macros propias, klipper-macros...):
+# cada copia toca sus archivos y provocaba otra copia, en bucle (20/11/26).
+exclude_pattern=".swp|.tmp|printer-[0-9]*_[0-9]*.cfg|.bak|.bkp|/\.git(/|$)"
 
 inotifywait -mrP -e close_write -e move -e delete --exclude "$exclude_pattern" $watchlist |
 while read -r path event file; do
