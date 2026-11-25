@@ -9,6 +9,20 @@ parent_path=$(
     pwd -P
 )
 
+# Only one backup at a time. The filewatch service, the boot service and manual runs can start
+# together; while one run empties $backup_path at the end, another one may be in the middle of
+# copying files and "git add", and then it commits (and pushes) those files as deleted.
+# A second run waits for the first one instead of skipping, so no change is lost.
+# The lock lives in $HOME because systemd services may get a private /tmp.
+if [[ -z "$KB_LOCK_HELD" ]] && command -v flock >/dev/null 2>&1; then
+    exec 9>"$HOME/.klipper-backup.lock"
+    if ! flock -w 900 9; then
+        echo "Error: another Klipper-Backup run has been busy for 15 minutes, giving up."
+        exit 1
+    fi
+    export KB_LOCK_HELD=1   # script.sh may re-exec itself (v1 .env upgrade) with the lock still held
+fi
+
 # Initialize variables from .env file
 if [[ ! -f "$parent_path"/.env ]]; then
     echo "Error: $parent_path/.env not found. Run $parent_path/install.sh to configure Klipper-Backup."
